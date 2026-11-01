@@ -98,6 +98,17 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .dtop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-weight:500}
 .dtop span:last-child{color:var(--accent)}
 .daily .bar{margin-bottom:10px}
+.foot-row{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.foot{min-height:0;padding:6px 12px;font-size:.88rem}
+.foot.danger{color:#f87171;border-color:#7f1d1d}
+.foot.danger:hover:not(:disabled){background:rgba(248,113,113,.1);border-color:#f87171!important}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.days div{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted)}
+.days b{font-size:.95rem;font-weight:600}
+.days span{font-size:.72rem}
+.days .part{border-color:#4a4a4a;color:var(--ink)}
+.days .met{background:rgba(62,207,142,.15);border-color:var(--accent);color:var(--accent)}
+.days .today{outline:2px solid var(--accent);outline-offset:1px}
 .dgoal{font-size:.9rem;display:flex;gap:8px;align-items:center}
 #goal{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
 #tfill{transition:width 1s linear}
@@ -132,14 +143,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <section id="start" class="screen">
   <h1>GRE vocab flashcards</h1>
   <p class="muted">Each session deals a random set of words you haven't seen recently. Flip the card, then mark whether you knew it. <span id="total"></span></p>
-  <div class="daily">
-    <div class="dtop"><span id="dtext"></span><span id="dstreak"></span></div>
-    <div class="bar"><i id="dfill"></i></div>
-    <label class="muted dgoal">Daily goal
-      <select id="goal"><option>10</option><option>25</option><option>50</option><option>75</option><option>100</option></select> words</label>
-  </div>
   <div class="stats" id="stats"></div>
   <div class="bar"><i id="mfill"></i></div>
+  <div class="row" style="margin:0 0 4px"><button id="resume" hidden>Resume</button><button id="go" class="primary">Start session</button></div>
   <p class="lbl">Words per session</p>
   <div class="sizes" role="group" aria-label="Words per session">
     <button data-n="10" aria-pressed="false">10 words</button>
@@ -170,12 +176,12 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <button data-src="star" aria-pressed="false">Starred</button>
   </div>
   <div style="margin-top:10px"><button class="tog" id="skipm" aria-pressed="true">Skip mastered words (random)</button></div>
-  <div class="row" style="margin-top:22px"><button id="resume" hidden>Resume</button><button id="go" class="primary">Start session</button></div>
-  <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">
-    <button id="reset" style="min-height:0;padding:4px 10px;font-size:.85rem">Reset all progress</button>
-    <button id="vocabs" style="min-height:0;padding:4px 10px;font-size:.85rem">Show all vocabs</button>
-    <button id="bkbtn" style="min-height:0;padding:4px 10px;font-size:.85rem">Backup &amp; restore</button>
-    <button id="install" hidden style="min-height:0;padding:4px 10px;font-size:.85rem">Install app</button>
+  <div class="foot-row">
+    <button class="foot" id="streakBtn">Daily Streak</button>
+    <button class="foot" id="vocabs">Show all Vocabs</button>
+    <button class="foot" id="bkbtn">Backup &amp; Restore</button>
+    <button class="foot danger" id="reset">Reset all progress</button>
+    <button class="foot" id="install" hidden>Install app</button>
   </div>
   <p class="muted" style="font-size:.85rem;margin:10px 0 0">Offline use: on iPhone tap Share, then Add to Home Screen. On Android or desktop Chrome, use the Install button when it appears. Needs the site to be hosted over https.</p>
   <div id="bk" hidden style="margin-top:14px">
@@ -218,6 +224,20 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <button id="redo">Review missed</button>
     <button id="undo2">Undo last answer</button>
   </div>
+</section>
+
+<section id="streak" class="screen" hidden>
+  <div class="top"><button id="streakBack" style="min-height:0;padding:4px 12px">Back</button></div>
+  <h1 style="font-size:1.6rem">Daily streak</h1>
+  <div class="daily">
+    <div class="dtop"><span id="dtext"></span><span id="dstreak"></span></div>
+    <div class="bar"><i id="dfill"></i></div>
+    <label class="muted dgoal">Daily goal
+      <select id="goal"><option>10</option><option>25</option><option>50</option><option>75</option><option>100</option></select> words</label>
+  </div>
+  <p class="lbl">Last 14 days</p>
+  <div class="days" id="days"></div>
+  <p class="muted" style="font-size:.9rem;margin-top:14px">A day counts toward your streak once you answer your daily goal of words. Flashcards and quizzes both count.</p>
 </section>
 
 <section id="list" class="screen" hidden>
@@ -316,6 +336,13 @@ function dailyInfo(){
   $('dfill').style.width = Math.min(100, c/g*100) + '%';
   $('dstreak').textContent = s ? `Streak: ${s} ${s === 1 ? 'day' : 'days'}` : 'No streak yet';
   $('goal').value = g;
+  const dd = new Date(); dd.setDate(dd.getDate() - 13); let h = '';
+  for(let n = 0; n < 14; n++){
+    const key = dk(dd), cn = P.daily.days[key] || 0;
+    h += `<div class="${P.daily.met[key] ? 'met' : cn ? 'part' : ''}${n === 13 ? ' today' : ''}" title="${key}: ${cn} words"><b>${dd.getDate()}</b><span>${cn}</span></div>`;
+    dd.setDate(dd.getDate() + 1);
+  }
+  $('days').innerHTML = h;
   $('dnote').textContent = `Today: ${c} / ${g} words${c >= g ? ' · goal reached' : ''}${s ? ` · ${s}-day streak` : ''}`;
 }
 function stopTimer(){ if(tick){ clearInterval(tick); tick = null; } }
@@ -339,7 +366,7 @@ function undo(){
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch(e){ return []; } }
 function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){} }
 function shuffle(a){ a = a.slice(); for(let k=a.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [a[k],a[j]]=[a[j],a[k]]; } return a; }
-function show(id){ if(id !== 'study') stopTimer(); ['start','study','done','list'].forEach(s => $(s).hidden = s !== id); window.scrollTo(0,0); }
+function show(id){ if(id !== 'study') stopTimer(); ['start','study','done','list','streak'].forEach(s => $(s).hidden = s !== id); window.scrollTo(0,0); }
 function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function tags(s){ return '<div class="tags">'+s.split(',').map(t=>'<span>'+esc(t.trim())+'</span>').join('')+'</div>'; }
 
@@ -493,17 +520,21 @@ function filterList(){
   $('vcount').textContent = `${n} of ${WORDS.length} words`;
   $('vempty').hidden = n > 0;
 }
-let page = location.hash === '#/vocabs' ? 'vocabs' : 'home';
+const ROUTES = ['vocabs','streak'];
+const fromHash = () => { const h = location.hash.replace('#/', ''); return ROUTES.includes(h) ? h : 'home'; };
+let page = fromHash();
 function apply(){
   if(page === 'vocabs'){ renderList(); show('list'); }
-  else if(!$('list').hidden){ seenInfo(); show('start'); }
+  else if(page === 'streak'){ dailyInfo(); show('streak'); }
+  else if(!$('list').hidden || !$('streak').hidden){ seenInfo(); show('start'); }
 }
 function nav(p){
   if(p !== page){ page = p; apply(); }
-  try{ location.hash = p === 'vocabs' ? '#/vocabs' : '#/'; }catch(e){}
+  try{ location.hash = p === 'home' ? '#/' : '#/' + p; }catch(e){}
 }
 $('vocabs').onclick = () => nav('vocabs');
-$('listBack').onclick = () => nav('home');
+$('streakBtn').onclick = () => nav('streak');
+$('listBack').onclick = () => nav('home'); $('streakBack').onclick = () => nav('home');
 $('goal').onchange = () => {
   P.daily.goal = +$('goal').value; const k = dk();
   if((P.daily.days[k] || 0) >= P.daily.goal) P.daily.met[k] = 1; else delete P.daily.met[k];
@@ -547,7 +578,7 @@ $('vlist').addEventListener('keydown', e => { const el = e.target.closest('.sb')
 $('q').addEventListener('input', filterList);
 document.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { lf = b.dataset.f; filterList(); }));
 window.addEventListener('hashchange', () => {
-  const p = location.hash === '#/vocabs' ? 'vocabs' : 'home';
+  const p = fromHash();
   if(p !== page){ page = p; apply(); }
 });
 seenInfo(); apply();
