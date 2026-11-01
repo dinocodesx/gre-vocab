@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#171717">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GRE Vocab">
 <title>GRE Vocab Flashcards</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -89,6 +94,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .qcard .sent{font-size:1.2rem;line-height:1.55;margin:6px 0 0}
 .qcard .cap2{font-size:.85rem;margin-bottom:8px}
 #bkt{font-size:.8rem;resize:vertical}
+.daily{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 12px}
+.dtop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-weight:500}
+.dtop span:last-child{color:var(--accent)}
+.daily .bar{margin-bottom:10px}
+.dgoal{font-size:.9rem;display:flex;gap:8px;align-items:center}
+#goal{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+#tfill{transition:width 1s linear}
 .front .word.rv{font-size:1.45rem;font-weight:500;line-height:1.4}
 .ts{display:grid;gap:12px;margin:0 0 6px}
 .ts>div{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.95rem}
@@ -120,6 +132,12 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <section id="start" class="screen">
   <h1>GRE vocab flashcards</h1>
   <p class="muted">Each session deals a random set of words you haven't seen recently. Flip the card, then mark whether you knew it. <span id="total"></span></p>
+  <div class="daily">
+    <div class="dtop"><span id="dtext"></span><span id="dstreak"></span></div>
+    <div class="bar"><i id="dfill"></i></div>
+    <label class="muted dgoal">Daily goal
+      <select id="goal"><option>10</option><option>25</option><option>50</option><option>75</option><option>100</option></select> words</label>
+  </div>
   <div class="stats" id="stats"></div>
   <div class="bar"><i id="mfill"></i></div>
   <p class="lbl">Words per session</p>
@@ -137,6 +155,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <button data-mode="syn" aria-pressed="false">Quiz: synonym</button>
     <button data-mode="ant" aria-pressed="false">Quiz: opposite</button>
   </div>
+  <p class="lbl">Timer for quizzes (per question)</p>
+  <div class="sizes" role="group" aria-label="Timer">
+    <button data-t="0" aria-pressed="true">Off</button>
+    <button data-t="15" aria-pressed="false">15 s</button>
+    <button data-t="30" aria-pressed="false">30 s</button>
+    <button data-t="60" aria-pressed="false">60 s</button>
+  </div>
   <p class="lbl">Words from</p>
   <div class="sizes" role="group" aria-label="Word source">
     <button data-src="random" aria-pressed="true">Random, new first</button>
@@ -150,7 +175,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <button id="reset" style="min-height:0;padding:4px 10px;font-size:.85rem">Reset all progress</button>
     <button id="vocabs" style="min-height:0;padding:4px 10px;font-size:.85rem">Show all vocabs</button>
     <button id="bkbtn" style="min-height:0;padding:4px 10px;font-size:.85rem">Backup &amp; restore</button>
+    <button id="install" hidden style="min-height:0;padding:4px 10px;font-size:.85rem">Install app</button>
   </div>
+  <p class="muted" style="font-size:.85rem;margin:10px 0 0">Offline use: on iPhone tap Share, then Add to Home Screen. On Android or desktop Chrome, use the Install button when it appears. Needs the site to be hosted over https.</p>
   <div id="bk" hidden style="margin-top:14px">
     <p class="muted" style="font-size:.9rem">Create a backup, copy it, then paste it into this box on another device and tap Restore.</p>
     <textarea id="bkt" rows="5" aria-label="Backup data" placeholder="Backup text appears here. Paste a backup here to restore."></textarea>
@@ -168,6 +195,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
       <div class="face back" id="back"></div>
     </button>
   </div>
+  <div id="tbox" class="top" hidden style="gap:10px"><div class="bar" style="flex:1;margin:0"><i id="tfill"></i></div><span id="tnum" style="min-width:3ch;text-align:right"></span></div>
   <div id="quiz" hidden></div>
   <div class="actions" id="actions">
     <button class="learn" id="learn">Still learning</button>
@@ -180,6 +208,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <h1>Session complete</h1>
   <div class="score" id="score"></div>
   <p class="muted" id="scoreNote"></p>
+  <p id="dnote" style="margin:0 0 16px"></p>
   <p class="muted" style="margin:0 0 10px">Accuracy by question type (all sessions)</p>
   <div class="ts" id="tstats"></div>
   <p class="muted" id="tnote" style="margin:0 0 20px;font-size:.92rem"></p>
@@ -211,9 +240,9 @@ const WORDS = [{"Word":"Abase","Pronunciation":"/əˈbeɪs/","Meaning":"To lower
 
 const $ = id => document.getElementById(id);
 const KEY = 'gre_seen_v1';
-let size = 25, mode = 'cards', src = 'random', deck = [], i = 0, flipped = false, missed = [], known = 0, qOpts = [], qOK = null, hist = [], skip = true;
+let size = 25, mode = 'cards', src = 'random', deck = [], i = 0, flipped = false, missed = [], known = 0, qOpts = [], qOK = null, hist = [], skip = true, tsec = 0, tleft = 0, tick = null;
 const PK = 'gre_progress_v2';
-function newP(){ return {mastered:{},weak:{},srs:{},star:{},types:{}}; }
+function newP(){ return {mastered:{},weak:{},srs:{},star:{},types:{},daily:{goal:25,days:{},met:{}}}; }
 function loadP(){
   const p = newP();
   try{ Object.assign(p, JSON.parse(localStorage.getItem(PK)) || {}); }catch(e){}
@@ -276,10 +305,31 @@ function typeStats(){
   $('tstats').innerHTML = rows.map(r => `<div class="${weak && weak.k === r.k ? 'weak' : ''}"><span>${TL[r.k]}</span><span>${r.p}% · ${r.n} answered</span><span class="tb"><i style="width:${r.p}%"></i></span></div>`).join('');
   $('tnote').textContent = weak ? `Weakest so far: ${TL[weak.k]} (${weak.p}%). Try more of that next.` : 'Try a few different question types (5+ answers each) to see which one needs work.';
 }
+const dk = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+function streak(){
+  const met = P.daily.met, d = new Date(); if(!met[dk(d)]) d.setDate(d.getDate() - 1);
+  let n = 0; while(met[dk(d)]){ n++; d.setDate(d.getDate() - 1); } return n;
+}
+function dailyInfo(){
+  const c = P.daily.days[dk()] || 0, g = P.daily.goal, s = streak();
+  $('dtext').textContent = c >= g ? `Goal reached: ${c} words today` : `Today: ${c} / ${g} words`;
+  $('dfill').style.width = Math.min(100, c/g*100) + '%';
+  $('dstreak').textContent = s ? `Streak: ${s} ${s === 1 ? 'day' : 'days'}` : 'No streak yet';
+  $('goal').value = g;
+  $('dnote').textContent = `Today: ${c} / ${g} words${c >= g ? ' · goal reached' : ''}${s ? ` · ${s}-day streak` : ''}`;
+}
+function stopTimer(){ if(tick){ clearInterval(tick); tick = null; } }
+function drawT(){ $('tfill').style.width = (tleft/tsec*100) + '%'; $('tnum').textContent = tleft + 's'; $('tfill').style.background = tleft <= 5 ? 'var(--miss)' : ''; }
+function startTimer(){
+  stopTimer(); $('tbox').hidden = !tsec; if(!tsec) return;
+  tleft = tsec; drawT();
+  tick = setInterval(() => { tleft--; drawT(); if(tleft <= 0){ stopTimer(); answer(-1); } }, 1000);
+}
 function undo(){
   const h = hist.pop(); if(!h) return;
   if(h.ok) known--; else missed.pop();
   const tp = P.types[h.md]; if(tp){ tp.n--; if(h.ok) tp.ok--; }
+  const c = P.daily.days[h.dy]; if(c){ P.daily.days[h.dy] = c - 1; if(c - 1 < P.daily.goal) delete P.daily.met[h.dy]; }
   if(h.s) P.srs[h.wd] = h.s; else delete P.srs[h.wd];
   if(h.m) P.mastered[h.wd] = 1; else delete P.mastered[h.wd];
   if(h.wk) P.weak[h.wd] = 1; else delete P.weak[h.wd];
@@ -289,7 +339,7 @@ function undo(){
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch(e){ return []; } }
 function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){} }
 function shuffle(a){ a = a.slice(); for(let k=a.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [a[k],a[j]]=[a[j],a[k]]; } return a; }
-function show(id){ ['start','study','done','list'].forEach(s => $(s).hidden = s !== id); window.scrollTo(0,0); }
+function show(id){ if(id !== 'study') stopTimer(); ['start','study','done','list'].forEach(s => $(s).hidden = s !== id); window.scrollTo(0,0); }
 function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function tags(s){ return '<div class="tags">'+s.split(',').map(t=>'<span>'+esc(t.trim())+'</span>').join('')+'</div>'; }
 
@@ -298,6 +348,7 @@ function setPressed(attr, val){
   b.parentNode.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
 }
 function seenInfo(){
+  dailyInfo();
   const now = Date.now(), m = Object.keys(P.mastered).length, wk = Object.keys(P.weak).length, st = Object.keys(P.star).length;
   const due = Object.keys(P.srs).filter(w => P.srs[w].due <= now).length;
   $('stats').innerHTML = [[m,'mastered'],[wk,'need work'],[due,'due for review'],[st,'starred']].map(([n,l]) => `<div><b>${n}</b><span>${l}</span></div>`).join('');
@@ -326,7 +377,7 @@ function newSession(){
   }
   if(pick.length) begin(pick);
 }
-function layout(){ const q = QZ(); $('scene').hidden = q; $('actions').hidden = q; $('keys').hidden = q; $('quiz').hidden = !q; }
+function layout(){ const q = QZ(); $('scene').hidden = q; $('actions').hidden = q; $('keys').hidden = q; $('quiz').hidden = !q; if(!q) $('tbox').hidden = true; }
 function begin(list){ deck = list; i = 0; missed = []; known = 0; hist = []; saveS(); layout(); show('study'); render(); }
 
 function render(){
@@ -350,20 +401,22 @@ function renderQuiz(w){
   qOK = null; const q = buildQ(w); qOpts = q.opts;
   $('quiz').innerHTML = `<div class="qcard"><div class="muted cap2">${q.cap}</div>${q.head}</div><div class="opts">`+
     qOpts.map((o,k) => `<button class="opt" data-k="${k}"><b>${k+1}</b>${esc(o.t)}</button>`).join('')+`</div><div id="fb"></div>`;
-  document.querySelectorAll('.opt').forEach(b => b.onclick = () => answer(+b.dataset.k));
+  document.querySelectorAll('.opt').forEach(b => b.onclick = () => answer(+b.dataset.k)); startTimer();
 }
 function answer(k){
-  if(qOK !== null || !qOpts[k]) return;
-  const w = deck[i]; qOK = qOpts[k].ok;
+  if(qOK !== null || (k >= 0 && !qOpts[k])) return;
+  stopTimer();
+  const w = deck[i]; qOK = k >= 0 && qOpts[k].ok;
   document.querySelectorAll('.opt').forEach((b,j) => { b.disabled = true; if(qOpts[j].ok) b.classList.add('right'); else if(j === k) b.classList.add('wrong'); });
-  $('fb').innerHTML = `<p class="ex">${esc(w['Example Sentence'])}</p><p class="muted"><b>${esc(w.Word)}</b>: ${esc(w.Meaning)}<br>Synonyms: ${esc(w.Synonyms)}<br>Antonyms: ${esc(w.Antonyms)}</p><button class="primary" id="nx">${i+1 < deck.length ? 'Next word' : 'See results'}</button>`;
+  $('fb').innerHTML = `${k < 0 ? "<p class='muted'><b>Time's up.</b></p>" : ''}<p class="ex">${esc(w['Example Sentence'])}</p><p class="muted"><b>${esc(w.Word)}</b>: ${esc(w.Meaning)}<br>Synonyms: ${esc(w.Synonyms)}<br>Antonyms: ${esc(w.Antonyms)}</p><button class="primary" id="nx">${i+1 < deck.length ? 'Next word' : 'See results'}</button>`;
   $('nx').onclick = () => mark(qOK); $('nx').focus();
 }
 function flip(){ flipped = !flipped; $('card').classList.toggle('flipped', flipped); }
 function mark(ok){
   if(ok) known++; else missed.push(deck[i]);
   const wd = deck[i].Word;
-  hist.push({i, wd, ok, md:mode, s:P.srs[wd] ? {...P.srs[wd]} : null, m:!!P.mastered[wd], wk:!!P.weak[wd]});
+  const dy = dk(); P.daily.days[dy] = (P.daily.days[dy] || 0) + 1; if(P.daily.days[dy] >= P.daily.goal) P.daily.met[dy] = 1;
+  hist.push({i, wd, ok, md:mode, dy, s:P.srs[wd] ? {...P.srs[wd]} : null, m:!!P.mastered[wd], wk:!!P.weak[wd]});
   const tp = P.types[mode] || (P.types[mode] = {n:0, ok:0}); tp.n++; if(ok) tp.ok++;
   grade(wd, ok); saveP();
   i++; if(i >= deck.length){ clearS(); return finish(); }
@@ -381,7 +434,7 @@ function finish(){
 
 document.querySelectorAll('.sizes').forEach(g => g.querySelectorAll('button').forEach(b => b.onclick = () => {
   g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
-  if(b.dataset.n) size = +b.dataset.n; if(b.dataset.mode) mode = b.dataset.mode; if(b.dataset.src) src = b.dataset.src;
+  if(b.dataset.n) size = +b.dataset.n; if(b.dataset.mode) mode = b.dataset.mode; if(b.dataset.src) src = b.dataset.src; if(b.dataset.t !== undefined) tsec = +b.dataset.t;
 }));
 let tx = null;
 $('scene').addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
@@ -451,6 +504,15 @@ function nav(p){
 }
 $('vocabs').onclick = () => nav('vocabs');
 $('listBack').onclick = () => nav('home');
+$('goal').onchange = () => {
+  P.daily.goal = +$('goal').value; const k = dk();
+  if((P.daily.days[k] || 0) >= P.daily.goal) P.daily.met[k] = 1; else delete P.daily.met[k];
+  saveP(); dailyInfo();
+};
+let dip = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); dip = e; $('install').hidden = false; });
+window.addEventListener('appinstalled', () => { $('install').hidden = true; });
+$('install').onclick = async () => { if(!dip) return; dip.prompt(); try{ await dip.userChoice; }catch(e){} dip = null; $('install').hidden = true; };
 $('star').onclick = () => { const wd = deck[i].Word; if(P.star[wd]) delete P.star[wd]; else P.star[wd] = 1; saveP(); $('star').textContent = P.star[wd] ? '★ Starred' : '☆ Star'; };
 $('undo').onclick = undo; $('undo2').onclick = undo;
 $('skipm').onclick = () => { skip = !skip; $('skipm').setAttribute('aria-pressed', skip); };
@@ -489,6 +551,7 @@ window.addEventListener('hashchange', () => {
   if(p !== page){ page = p; apply(); }
 });
 seenInfo(); apply();
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {})); }
 </script>
 </body>
 </html>
