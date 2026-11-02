@@ -212,8 +212,12 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
 }
 
 .ib.has{color:var(--accent);border-color:rgba(62,207,142,.45)}
-.nt dt{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:4px;font-weight:600}
-.nt p{margin:0;white-space:pre-wrap;font-size:.95rem;background:rgba(62,207,142,.07);border:1px solid rgba(62,207,142,.25);border-radius:12px;padding:8px 12px}
+.nbtn{display:inline-flex;align-items:center;gap:6px;background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.35);color:var(--accent);padding:4px 10px 4px 10px;border-radius:99px;font-size:.84rem;font-weight:500;cursor:pointer;user-select:none}
+.nbtn svg{width:15px;height:15px}
+.nbtn .chev{width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translate(-1px,-1px);transition:transform .2s;margin-left:2px}
+.nbtn.open .chev{transform:rotate(225deg) translate(-1px,-1px)}
+.nt p{margin:8px 0 0;white-space:pre-wrap;font-size:.95rem;background:rgba(62,207,142,.07);border:1px solid rgba(62,207,142,.25);border-radius:12px;padding:8px 12px;text-align:left}
+@media (max-width:420px){.seg button{padding:8px 4px;font-size:.85rem}}
 .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;padding:16px}
 @media (min-width:600px){.modal{align-items:center}}
 .sheet{width:100%;max-width:460px;background:var(--surface);border:1px solid var(--line2);border-radius:22px;padding:16px;box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
@@ -442,8 +446,9 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
   <div class="seg sizes" role="group" aria-label="Filter" style="margin-bottom:14px">
     <button data-f="all" aria-pressed="true">All</button>
     <button data-f="m" aria-pressed="false">Mastered</button>
-    <button data-f="w" aria-pressed="false">Need work</button>
+    <button data-f="w" aria-pressed="false">Weak</button>
     <button data-f="s" aria-pressed="false">Starred</button>
+    <button data-f="n" aria-pressed="false">Notes</button>
   </div>
   <div id="vlist"></div>
   <p id="vempty" class="muted" hidden>No words match. Try a different search or filter.</p>
@@ -702,7 +707,15 @@ function setStar(){
   b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'Remove star' : 'Star this word');
   const hn = !!P.notes[deck[i].Word]; $('note').classList.toggle('has', hn); $('note').setAttribute('aria-label', hn ? 'Edit your note' : 'Add a personal note');
 }
-function noteHTML(w){ const n = P.notes[w.Word]; return n ? `<div class="nt"><dt>Your note</dt><dd><p>${esc(n)}</p></dd></div>` : ''; }
+function noteChip(w){
+  const n = P.notes[w.Word];
+  return n ? `<div class="nt"><span class="nbtn" role="button" tabindex="0" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 11h8M8 15h5"/></svg>Includes Note<span class="chev"></span></span><p hidden>${esc(n)}</p></div>` : '';
+}
+function toggleNote(btn){
+  const p = btn.nextElementSibling; if(!p) return;
+  p.hidden = !p.hidden; btn.setAttribute('aria-expanded', !p.hidden); btn.classList.toggle('open', !p.hidden);
+}
+function noteHTML(w){ return noteChip(w); }
 function backHTML(w, st){
   const chip = st ? `<span class="st ${st === 'ok' ? 'ok' : 'no'}">${st === 'ok' ? 'Correct' : st === 'time' ? "Time's up" : 'Not quite'}</span>` : '';
   return `<div class="bi">${chip}<div class="bhead"><h2 class="bw">${esc(w.Word)}</h2><span class="pron">${esc(w.Pronunciation)}</span></div><p class="mean">${esc(w.Meaning)}</p>`+
@@ -804,7 +817,8 @@ $('reset').onclick = () => {
   b.textContent = 'Progress cleared';
   setTimeout(() => { b.textContent = 'Reset all progress'; }, 1800);
 };
-$('card').onclick = () => { if(QZ() || busy) return; flip(); };
+$('card').onclick = e => { const nb = e.target.closest('.nbtn'); if(nb){ toggleNote(nb); return; } if(QZ() || busy) return; flip(); };
+$('card').addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.nbtn')){ e.stopPropagation(); e.preventDefault(); toggleNote(e.target.closest('.nbtn')); } }, true);
 $('learn').onclick = () => mark(false);
 $('know').onclick = () => mark(true);
 $('nx').onclick = () => { if(qOK !== null && !busy && !$('nx').disabled) mark(qOK); };
@@ -825,7 +839,7 @@ $('total').textContent = `${WORDS.length.toLocaleString('en-US')} words in this 
 let lf = 'all';
 const SEARCH = WORDS.map(w => (w.Word+' '+w.Meaning).toLowerCase());
 function vbody(w){
-  return `<div class="vb"><p>${esc(w.Meaning)}</p><div><div class="cap">Synonyms</div>${tags(w.Synonyms)}</div><div><div class="cap">Antonyms</div>${tags(w.Antonyms)}</div><p class="ex">${esc(w['Example Sentence'])}</p>${P.notes[w.Word] ? `<div><div class="cap">Your note</div><p style="white-space:pre-wrap">${esc(P.notes[w.Word])}</p></div>` : ''}</div>`;
+  return `<div class="vb"><p>${esc(w.Meaning)}</p><div><div class="cap">Synonyms</div>${tags(w.Synonyms)}</div><div><div class="cap">Antonyms</div>${tags(w.Antonyms)}</div><p class="ex">${esc(w['Example Sentence'])}</p>${noteChip(w)}</div>`;
 }
 $('vlist').addEventListener('toggle', e => {
   const d = e.target;
@@ -841,11 +855,12 @@ function filterList(){
   const q = $('q').value.trim().toLowerCase(); let n = 0;
   $('vlist').querySelectorAll('.v').forEach(el => {
     const st = el.classList.contains('m') ? 'm' : el.classList.contains('w') ? 'w' : '';
-    const ok = (lf === 'all' || (lf === 's' ? !!P.star[WORDS[+el.dataset.i].Word] : lf === st)) && (!q || SEARCH[+el.dataset.i].includes(q));
+    const ok = (lf === 'all' || (lf === 's' ? !!P.star[WORDS[+el.dataset.i].Word] : lf === 'n' ? !!P.notes[WORDS[+el.dataset.i].Word] : lf === st)) && (!q || SEARCH[+el.dataset.i].includes(q));
     el.hidden = !ok; if(ok) n++;
   });
   $('vcount').textContent = `${n} of ${WORDS.length} words`;
   $('vempty').hidden = n > 0;
+  $('vempty').textContent = lf === 'n' && !q ? 'No notes yet. Tap the note icon while studying a word to add one.' : 'No words match. Try a different search or filter.';
 }
 const ROUTES = ['vocabs','streak'];
 const fromHash = () => { const h = location.hash.replace('#/', ''); return ROUTES.includes(h) ? h : 'home'; };
@@ -937,8 +952,8 @@ function toggleStar(el){
   d.classList.toggle('s', !!P.star[wd]); el.textContent = P.star[wd] ? '★' : '☆';
   if(lf === 's') filterList();
 }
-$('vlist').addEventListener('click', e => { const el = e.target.closest('.sb'); if(el){ e.preventDefault(); toggleStar(el); } });
-$('vlist').addEventListener('keydown', e => { const el = e.target.closest('.sb'); if(el && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); toggleStar(el); } });
+$('vlist').addEventListener('click', e => { const nb = e.target.closest('.nbtn'); if(nb){ toggleNote(nb); return; } const el = e.target.closest('.sb'); if(el){ e.preventDefault(); toggleStar(el); } });
+$('vlist').addEventListener('keydown', e => { const nb = e.target.closest('.nbtn'); if(nb && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); toggleNote(nb); return; } const el = e.target.closest('.sb'); if(el && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); toggleStar(el); } });
 $('q').addEventListener('input', filterList);
 document.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { lf = b.dataset.f; filterList(); }));
 window.addEventListener('hashchange', () => {
