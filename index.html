@@ -122,6 +122,11 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
 @media (max-width:520px){.cta{flex-direction:column}.cta .primary{flex:none;order:1}#resume{order:2;flex:none;min-height:48px;border-radius:14px;color:var(--accent);border-color:rgba(62,207,142,.4);background:rgba(62,207,142,.06)}}
 .foot-row{margin-top:10px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
 .foot{min-height:0;padding:7px 14px;font-size:.88rem;border-radius:99px;color:var(--muted)}
+.shead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:14px;font-family:var(--display);font-size:1.05rem}
+#saved{font-family:var(--sans);font-size:.78rem;font-weight:400;color:var(--muted);transition:color .25s}
+#saved.on{color:var(--accent)}
+.foot.gear{padding:7px 11px;display:inline-flex;align-items:center}
+.foot.gear[aria-expanded="true"]{color:var(--accent);border-color:var(--accent)}
 .foot.danger{color:#f87171;border-color:#5a1f24}
 .foot.danger:hover:not(:disabled){background:rgba(248,113,113,.1)!important;border-color:#f87171!important}
 .note{display:flex;gap:10px;align-items:flex-start;font-size:.82rem;color:var(--muted);background:var(--surface);border:1px dashed var(--line2);border-radius:14px;padding:10px 12px;margin-top:14px}
@@ -247,20 +252,28 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
 .daily .bar{margin-bottom:12px}
 .dgoal{font-size:.9rem;display:flex;gap:8px;align-items:center}
 #goal{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:5px 8px}
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.days div{aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);min-width:0}
-.days b{font-size:.95rem;font-weight:600}
-.days span{font-size:.72rem;min-height:1em}
-.days .part{border-color:var(--line2);color:var(--ink)}
-.days .met{background:rgba(62,207,142,.15);border-color:var(--accent);color:var(--accent)}
-.days .fut{border-style:dashed;background:transparent;opacity:.55}
-.days .today{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:var(--accent-ink);transform:scale(1.07);box-shadow:0 10px 26px -10px rgba(62,207,142,.45);position:relative;z-index:1}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:12px 0 0}
-.legend span{display:flex;align-items:center;gap:6px}
-.legend i{width:10px;height:10px;border-radius:4px;border:1px solid var(--line2)}
-.legend .lm{background:rgba(62,207,142,.3);border-color:var(--accent)}
-.legend .lt{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
-.legend .lf{border-style:dashed}
+.heat{--gap:3px;display:grid;grid-template-columns:auto 1fr;gap:6px 8px;overflow:hidden}
+.heat .wd{display:grid;grid-template-rows:repeat(7,1fr);gap:var(--gap);font-size:.66rem;color:var(--muted);line-height:1;padding-top:calc(1rem + 6px)}
+.heat .wd span{display:flex;align-items:center}
+.heat .grid{min-width:0}
+.heat .mo{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:var(--gap);height:1rem;margin-bottom:6px;font-size:.66rem;color:var(--muted);line-height:1}
+.heat .mo span{white-space:nowrap;overflow:visible}
+.days{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-auto-columns:1fr;gap:var(--gap)}
+.days div{aspect-ratio:1;border-radius:3px;background:var(--surface2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);min-width:0;cursor:pointer}
+.days .l1{background:#17382b;box-shadow:none}
+.days .l2{background:#1f6b4a;box-shadow:none}
+.days .l3{background:#2da872;box-shadow:none}
+.days .l4{background:var(--accent);box-shadow:none}
+.days .fut{background:transparent;box-shadow:inset 0 0 0 1px var(--line);opacity:.5;cursor:default}
+.days .pad{visibility:hidden;cursor:default}
+.days .today{outline:2px solid var(--ink);outline-offset:1px;position:relative;z-index:1}
+.days div:hover:not(.pad):not(.fut){outline:1px solid var(--muted);outline-offset:1px}
+.hread{min-height:1.4em;font-size:.88rem;color:var(--muted);margin:10px 0 0}
+.hread b{color:var(--ink);font-weight:600}
+.legend{display:flex;gap:5px;align-items:center;font-size:.76rem;color:var(--muted);margin:12px 0 0;justify-content:flex-end}
+.legend i{width:12px;height:12px;border-radius:3px;background:var(--surface2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.legend .l1{background:#17382b;box-shadow:none}.legend .l2{background:#1f6b4a;box-shadow:none}.legend .l3{background:#2da872;box-shadow:none}.legend .l4{background:var(--accent);box-shadow:none}
+.legend em{font-style:normal;margin:0 3px}
 
 /* ---------- vocab list ---------- */
 .v{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:8px}
@@ -311,7 +324,14 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
     <button id="go" class="primary">Start session</button>
   </div>
 
-  <div class="panel">
+  <div class="foot-row">
+    <button class="foot" id="vocabs">Show all Vocabs</button>
+    <button class="foot" id="bkbtn">Backup &amp; Restore</button>
+    <button class="foot gear" id="gearBtn" aria-label="Settings" aria-expanded="false" aria-controls="settings" title="Settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="foot danger" id="reset">Reset all progress</button>
+  </div>
+  <div class="panel" id="settings" hidden>
+    <div class="shead"><b>Settings</b><span id="saved">Saved automatically</span></div>
     <p class="lbl">Words per session</p>
     <div class="seg sizes" role="group" aria-label="Words per session">
       <button data-n="10" aria-pressed="false">10</button>
@@ -349,11 +369,6 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
     <button class="tog" id="skipm" aria-pressed="true"><span>Skip mastered words<small class="muted" style="display:block;font-size:.78rem">Applies to random sessions</small></span><span class="sw"></span></button>
   </div>
 
-  <div class="foot-row">
-    <button class="foot" id="vocabs">Show all Vocabs</button>
-    <button class="foot" id="bkbtn">Backup &amp; Restore</button>
-    <button class="foot danger" id="reset">Reset all progress</button>
-  </div>
   <div class="note" id="offnote"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><p>Offline use: on iPhone tap Share, then Add to Home Screen. On Android or desktop Chrome, use the Install button when it appears. Needs the site to be hosted over https.</p></div>
   <div id="bk" hidden style="margin-top:14px">
     <p class="muted" style="font-size:.9rem">Create a backup, copy it, then paste it into this box on another device and tap Restore.</p>
@@ -433,9 +448,13 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
     <div><b id="sbest">0</b><span><i style="--c:var(--accent2)"></i>best</span></div>
     <div><b id="stot">0</b><span><i style="--c:var(--good)"></i>days met</span></div>
   </div>
-  <p class="lbl">Your 21 days <span id="drange" style="text-transform:none;letter-spacing:0;font-weight:400"></span></p>
-  <div class="days" id="days"></div>
-  <div class="legend"><span><i class="lm"></i>Goal met</span><span><i class="lt"></i>Today</span><span><i class="lf"></i>Upcoming</span></div>
+  <p class="lbl">Your last 26 weeks <span id="drange" style="text-transform:none;letter-spacing:0;font-weight:400"></span></p>
+  <div class="heat">
+    <div class="wd" aria-hidden="true"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+    <div class="grid"><div class="mo" id="dmonths" aria-hidden="true"></div><div class="days" id="days" role="grid" aria-label="Daily words answered"></div></div>
+  </div>
+  <p class="hread" id="hread" aria-live="polite">Tap a square to see that day.</p>
+  <div class="legend"><em>Less</em><i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><em>More</em></div>
   <p class="muted" style="font-size:.9rem;margin-top:14px">A day counts toward your streak once you answer your daily goal of words. Flashcards and quizzes both count.</p>
 </section>
 
@@ -611,17 +630,28 @@ function dailyInfo(){
   $('htext').textContent = c >= g ? 'Goal reached' : `${c} / ${g} words`;
   $('hstreak').textContent = s ? `${s}-day streak` : 'Start your streak today';
   $('scur').textContent = s; $('sbest').textContent = Math.max(s, bestStreak()); $('stot').textContent = Object.keys(P.daily.met).length;
-  // 21 days: 10 before, today in the middle, 10 after
-  const dd = new Date(); dd.setDate(dd.getDate() - 10); let h = '';
-  const fm = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric'}), a = new Date(dd);
-  for(let n = 0; n < 21; n++){
-    const key = dk(dd), cn = P.daily.days[key] || 0, fut = n > 10;
-    const cls = n === 10 ? 'today' : fut ? 'fut' : P.daily.met[key] ? 'met' : cn ? 'part' : '';
-    h += `<div class="${cls}" title="${fut ? key : key + ': ' + cn + ' words'}"${n === 10 ? ' aria-current="date"' : ''}><b>${dd.getDate()}</b><span>${fut ? '' : cn}</span></div>`;
-    if(n < 20) dd.setDate(dd.getDate() + 1);
+  // GitHub-style heat map: 26 week columns (Sun-Sat rows), ending with the current week
+  const WEEKS = 26, today = new Date(); today.setHours(0,0,0,0);
+  const first = new Date(today); first.setDate(first.getDate() - today.getDay() - (WEEKS - 1)*7);
+  const fm = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  const lvl = n => !n ? 0 : n >= g ? 4 : n >= g*.5 ? 3 : n >= g*.25 ? 2 : 1;
+  let h = '', mo = '', lastM = -1; const dd = new Date(first);
+  for(let w = 0; w < WEEKS; w++){
+    const m = dd.getMonth();
+    mo += `<span>${m !== lastM && (w === 0 ? dd.getDate() <= 7 : true) ? dd.toLocaleDateString('en-US', {month:'short'}) : ''}</span>`;
+    if(m !== lastM) lastM = m;
+    for(let r = 0; r < 7; r++){
+      const key = dk(dd), cn = P.daily.days[key] || 0, fut = dd > today, isT = key === dk(today);
+      const cls = fut ? 'fut' : 'l' + lvl(cn);
+      const label = fut ? fm(dd) : `${cn} ${cn === 1 ? 'word' : 'words'} on ${fm(dd)}`;
+      h += `<div class="${cls}${isT ? ' today' : ''}" data-k="${key}" data-n="${cn}" data-f="${fut ? 1 : ''}" title="${label}" aria-label="${label}"${isT ? ' aria-current="date"' : ''}></div>`;
+      dd.setDate(dd.getDate() + 1);
+    }
   }
-  $('days').innerHTML = h;
-  $('drange').textContent = `· ${fm(a)} to ${fm(dd)}`;
+  $('days').innerHTML = h; $('dmonths').innerHTML = mo;
+  $('dmonths').style.gridTemplateColumns = `repeat(${WEEKS},1fr)`;
+  const endD = new Date(today); $('drange').textContent = `· ${fm(first)} to ${fm(endD)}`;
+  $('hread').innerHTML = `Today: <b>${c} ${c === 1 ? 'word' : 'words'}</b>${c >= g ? ' · goal met' : ` · goal ${g}`}`;
   $('dnote').textContent = `Today: ${c} / ${g} words${c >= g ? ' · goal reached' : ''}${s ? ` · ${s}-day streak` : ''}`;
 }
 
@@ -796,6 +826,7 @@ function finish(){
 document.querySelectorAll('.sizes').forEach(g => g.querySelectorAll('button').forEach(b => b.onclick = () => {
   g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
   if(b.dataset.n) size = +b.dataset.n; if(b.dataset.mode) mode = b.dataset.mode; if(b.dataset.src) src = b.dataset.src; if(b.dataset.t !== undefined) tsec = +b.dataset.t;
+  saveSettings();
 }));
 let tx = null;
 $('scene').addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
@@ -876,6 +907,11 @@ function nav(p){
 }
 $('vocabs').onclick = () => nav('vocabs');
 $('streakBtn').onclick = () => nav('streak');
+$('days').addEventListener('click', e => {
+  const el = e.target.closest('[data-k]'); if(!el || el.dataset.f) return;
+  const d = new Date(el.dataset.k + 'T00:00:00'), n = +el.dataset.n, g = P.daily.goal;
+  $('hread').innerHTML = `${d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'})}: <b>${n} ${n === 1 ? 'word' : 'words'}</b>${n >= g ? ' · goal met' : ''}`;
+});
 $('listBack').onclick = () => nav('home'); $('streakBack').onclick = () => nav('home');
 $('goal').onchange = () => {
   P.daily.goal = +$('goal').value; const k = dk();
@@ -924,7 +960,30 @@ $('notedel').onclick = () => { saveNote(''); closeNote(); };
 $('star').onclick = () => { const wd = deck[i].Word; setStarred(wd, !P.star[wd]); setStar(); };
 $('undo').onclick = undo;
 $('finish').onclick = () => { seenInfo(); show('start'); };
-$('skipm').onclick = () => { skip = !skip; $('skipm').setAttribute('aria-pressed', skip); };
+$('skipm').onclick = () => { skip = !skip; $('skipm').setAttribute('aria-pressed', skip); saveSettings(); };
+/* ---------- settings: auto-saved ---------- */
+const STK = 'gre_settings_v1';
+let savedT = null;
+function saveSettings(){
+  try{ localStorage.setItem(STK, JSON.stringify({size, mode, src, tsec, skip})); }catch(e){}
+  const el = $('saved'); el.textContent = 'Saved'; el.classList.add('on');
+  clearTimeout(savedT); savedT = setTimeout(() => { el.textContent = 'Saved automatically'; el.classList.remove('on'); }, 1400);
+}
+(function loadSettings(){
+  let o = null; try{ o = JSON.parse(localStorage.getItem(STK)); }catch(e){}
+  if(!o || typeof o !== 'object') return;
+  if([10,25,50].includes(o.size)){ size = o.size; setPressed('data-n', size); }
+  if(['cards','rev','meaning','blank','syn','ant'].includes(o.mode)){ mode = o.mode; setPressed('data-mode', mode); }
+  if(['random','starnew','due','weak','star'].includes(o.src)){ src = o.src; setPressed('data-src', src); }
+  if([0,15,30,60,90].includes(o.tsec)){ tsec = o.tsec; setPressed('data-t', tsec); }
+  if(typeof o.skip === 'boolean'){ skip = o.skip; $('skipm').setAttribute('aria-pressed', skip); }
+})();
+$('gearBtn').onclick = () => {
+  const open = $('settings').hidden;
+  $('settings').hidden = !open; $('gearBtn').setAttribute('aria-expanded', open);
+  if(open) $('settings').scrollIntoView({behavior:'smooth', block:'nearest'});
+};
+
 $('resume').onclick = () => {
   const s = loadS(); if(!s) return;
   const get = a => a.map(x => WORDS[IDX.get(x)]).filter(Boolean);
