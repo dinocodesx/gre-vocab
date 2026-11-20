@@ -253,8 +253,8 @@ button.tog{display:flex;align-items:center;justify-content:space-between;gap:12p
 .daily .bar{margin-bottom:12px}
 .dgoal{font-size:.9rem;display:flex;gap:8px;align-items:center}
 #goal{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:5px 8px}
-.heat{--gap:3px;display:grid;grid-template-columns:auto 1fr;gap:6px 8px;overflow:hidden}
-.heat .wd{display:grid;grid-template-rows:repeat(7,1fr);gap:var(--gap);font-size:.66rem;color:var(--muted);line-height:1;padding-top:calc(1rem + 6px)}
+.heat{--gap:3px;--cols:26;--cell:16px;display:grid;grid-template-columns:auto minmax(calc(var(--cols)*var(--cell) + (var(--cols) - 1)*var(--gap)),1fr);gap:6px 8px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:thin}
+.heat .wd{position:sticky;left:0;z-index:2;background:var(--surface);padding-right:4px;display:grid;grid-template-rows:repeat(7,1fr);gap:var(--gap);font-size:.66rem;color:var(--muted);line-height:1;padding-top:calc(1rem + 6px)}
 .heat .wd span{display:flex;align-items:center}
 .heat .grid{min-width:0}
 .heat .mo{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:var(--gap);height:1rem;margin-bottom:6px;font-size:.66rem;color:var(--muted);line-height:1}
@@ -658,6 +658,7 @@ function dailyInfo(){
   }
   $('days').innerHTML = h; $('dmonths').innerHTML = mo;
   $('dmonths').style.gridTemplateColumns = `repeat(${WEEKS},1fr)`;
+  scrollHeat();
   const endD = new Date(today); $('drange').textContent = `· ${fm(first)} to ${fm(endD)}`;
   $('hread').innerHTML = `Today: <b>${c} ${c === 1 ? 'word' : 'words'}</b>${c >= g ? ' · goal met' : ` · goal ${g}`}`;
   $('dnote').textContent = `Today: ${c} / ${g} words${c >= g ? ' · goal reached' : ''}${s ? ` · ${s}-day streak` : ''}`;
@@ -686,12 +687,14 @@ function undo(){
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch(e){ return []; } }
 function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){} }
 function shuffle(a){ a = a.slice(); for(let k=a.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [a[k],a[j]]=[a[j],a[k]]; } return a; }
+function scrollHeat(){ const el = document.querySelector('.heat'); if(el) el.scrollLeft = el.scrollWidth; }
 function show(id){
   if(typeof noteOpen !== 'undefined' && noteOpen) closeNote();
   if(id !== 'study') stopTimer();
   ['start','study','done','list','streak'].forEach(s => $(s).hidden = s !== id);
   if(id === 'study') swResume(); else swPause();
   window.scrollTo(0,0);
+  if(id === 'streak') scrollHeat();
 }
 function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function tags(s){ return '<div class="tags">'+s.split(',').map(t=>'<span>'+esc(t.trim())+'</span>').join('')+'</div>'; }
